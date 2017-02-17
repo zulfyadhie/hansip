@@ -1,0 +1,92 @@
+buildscript {
+	ext {
+		springBootVersion = '1.5.1.RELEASE'
+	}
+	repositories {
+		mavenCentral()
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
+	}
+	dependencies {
+		classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
+        classpath("gradle.plugin.com.ewerk.gradle.plugins:querydsl-plugin:1.0.7")
+	}
+}
+
+plugins {
+    id 'com.ewerk.gradle.plugins.querydsl' version '1.0.7'
+    id 'io.franzbecker.gradle-lombok' version '1.7'
+}
+
+project.afterEvaluate {
+    project.tasks.compileQuerydsl.options.compilerArgs = [
+            "-proc:only",
+            "-processor", project.querydsl.processors() +
+                    ',lombok.launch.AnnotationProcessorHider$AnnotationProcessor'
+    ]
+}
+
+apply plugin: 'java'
+apply plugin: 'eclipse'
+apply plugin: 'idea'
+apply plugin: 'org.springframework.boot'
+apply plugin: 'com.ewerk.gradle.plugins.querydsl'
+
+jar {
+	baseName = 'hansip'
+	version = '0.0.1-SNAPSHOT'
+}
+
+def queryDSLTarget = 'src/main/generated'
+
+querydsl {
+    mkdir(queryDSLTarget)
+    library = "com.querydsl:querydsl-apt:4.1.4"
+    querydslSourcesDir = queryDSLTarget
+    jpa = true
+    jdo = false
+    hibernate = false
+    morphia = false
+    roo = false
+    querydslDefault = true
+}
+
+sourceCompatibility = 1.8
+
+idea {
+    module {
+        sourceDirs += file(queryDSLTarget)
+    }
+}
+
+sourceSets {
+    main {
+        java {
+            srcDir "src/main/generated"
+        }
+    }
+}
+
+querydsl {
+    querydslSourcesDir = "src/main/generated"
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	compile('org.springframework.boot:spring-boot-starter')
+	compile('org.springframework.boot:spring-boot-starter-web')
+    compile("org.springframework.boot:spring-boot-starter-data-jpa")
+	compile('org.springframework.boot:spring-boot-starter-security')
+    compile('org.springframework.security.oauth:spring-security-oauth2:2.0.12.RELEASE')
+    compile('org.springframework.security:spring-security-jwt')
+    compile('io.jsonwebtoken:jjwt:0.7.0')
+    compile('com.querydsl:querydsl-apt:4.1.4')
+    compile('com.querydsl:querydsl-jpa:4.1.4')
+	compile('org.postgresql:postgresql:9.4.1212.jre7')
+    compileOnly('org.projectlombok:lombok')
+	testCompile('org.springframework.boot:spring-boot-starter-test')
+}
